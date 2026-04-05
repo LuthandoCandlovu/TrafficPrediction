@@ -60,136 +60,185 @@
 
 ## 🏗️ Architecture
 
-```
-╔══════════════════════════════════════════════════════════════════════════╗
-║                    SMART CITY TRAFFIC PREDICTION                        ║
-║                         SYSTEM ARCHITECTURE                             ║
-╠══════════════════════════════════════════════════════════════════════════╣
-║                                                                          ║
-║   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐                  ║
-║   │  📁 Traffic  │   │ 🌦️ Weather  │   │ 📅 Events   │                  ║
-║   │     CSV     │   │     API     │   │    Feed     │                  ║
-║   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘                  ║
-║          │                 │                 │                          ║
-║          └─────────────────┼─────────────────┘                          ║
-║                            ▼                                             ║
-║               ┌────────────────────────┐                                 ║
-║               │   🔄  Data Ingestion   │                                 ║
-║               │    generate_data.py    │                                 ║
-║               └────────────┬───────────┘                                 ║
-║                            │                                             ║
-║                            ▼                                             ║
-║               ┌────────────────────────┐                                 ║
-║               │   ⚙️  Feature Store    │                                 ║
-║               │                        │                                 ║
-║               │  • Lag features        │                                 ║
-║               │  • Rolling windows     │                                 ║
-║               │  • Time embeddings     │                                 ║
-║               │  • Seasonal encoding   │                                 ║
-║               └────────────┬───────────┘                                 ║
-║                            │                                             ║
-║            ┌───────────────┴────────────────┐                            ║
-║            ▼                                ▼                            ║
-║   ┌─────────────────┐            ┌─────────────────┐                     ║
-║   │  ⚡  XGBoost    │            │   🧠   LSTM     │                     ║
-║   │    Training     │            │    Training     │                     ║
-║   │                 │            │                 │                     ║
-║   │ train_          │            │ train_          │                     ║
-║   │ xgboost.py      │            │ lstm.py         │                     ║
-║   └────────┬────────┘            └────────┬────────┘                     ║
-║            │                              │                              ║
-║            ▼                              ▼                              ║
-║   ┌─────────────────┐            ┌─────────────────┐                     ║
-║   │ xgboost_model   │            │ lstm_model.pth  │                     ║
-║   │     .pkl        │            │   + scaler      │                     ║
-║   └────────┬────────┘            └────────┬────────┘                     ║
-║            └───────────────┬──────────────┘                              ║
-║                            ▼                                             ║
-║               ┌────────────────────────┐                                 ║
-║               │   🚀  FastAPI Server   │                                 ║
-║               │   run_dashboard.py     │                                 ║
-║               │      port: 8000        │                                 ║
-║               └────────────┬───────────┘                                 ║
-║                            │                                             ║
-║          ┌─────────────────┼─────────────────┐                           ║
-║          ▼                 ▼                 ▼                           ║
-║   ┌─────────────┐   ┌───────────────┐   ┌──────────┐                    ║
-║   │ POST        │   │ POST          │   │ GET      │                    ║
-║   │ /predict/   │   │ /predict/     │   │ /health  │                    ║
-║   │ xgboost     │   │ lstm          │   │          │                    ║
-║   └──────┬──────┘   └──────┬────────┘   └──────────┘                    ║
-║          └─────────────────┘                                             ║
-║                       ▲                                                  ║
-║          ┌────────────┴─────────────┐                                    ║
-║          │                          │                                    ║
-║   ┌──────────────┐       ┌──────────────────┐                            ║
-║   │ 🖥️ Dashboard │       │ 🔌 External Apps │                            ║
-║   │  port 8001   │       │                  │                            ║
-║   └──────────────┘       └──────────────────┘                            ║
-║                                                                          ║
-╚══════════════════════════════════════════════════════════════════════════╝
+```mermaid
+flowchart TD
+    subgraph SOURCES["📥 Data Sources"]
+        A[📁 Traffic CSV]
+        B[🌦️ Weather API]
+        C[📅 Events Feed]
+    end
+
+    subgraph INGESTION["🔄 Data Ingestion"]
+        D[generate_data.py]
+    end
+
+    subgraph FEATURES["⚙️ Feature Store"]
+        E["• Lag features
+• Rolling windows
+• Time embeddings
+• Seasonal encoding"]
+    end
+
+    subgraph TRAINING["🏋️ Model Training"]
+        direction LR
+        F[train_xgboost.py]
+        G[train_lstm.py]
+    end
+
+    subgraph ARTIFACTS["📦 Model Artifacts"]
+        direction LR
+        H[xgboost_model.pkl]
+        I[lstm_model.pth + scaler]
+    end
+
+    subgraph API["🚀 FastAPI Server — port 8000"]
+        J[run_dashboard.py]
+        K[POST /predict/xgboost]
+        L[POST /predict/lstm]
+        M[GET /health]
+    end
+
+    subgraph CLIENTS["🖥️ Clients"]
+        direction LR
+        N[Dashboard — port 8001]
+        O[External Apps]
+    end
+
+    A & B & C --> D
+    D --> E
+    E --> F & G
+    F --> H
+    G --> I
+    H & I --> J
+    J --> K & L & M
+    K & L --> N & O
+
+    style SOURCES fill:#1e3a5f,stroke:#00D4FF,color:#fff
+    style INGESTION fill:#1a4731,stroke:#00ff88,color:#fff
+    style FEATURES fill:#3d2b00,stroke:#ffaa00,color:#fff
+    style TRAINING fill:#3d1a00,stroke:#ff6600,color:#fff
+    style ARTIFACTS fill:#2d1a3d,stroke:#cc66ff,color:#fff
+    style API fill:#1a1a3d,stroke:#6688ff,color:#fff
+    style CLIENTS fill:#1a3d1a,stroke:#66ff88,color:#fff
 ```
 
 ---
 
 ## 🔄 Workflow
 
+```mermaid
+flowchart LR
+    S1["**Step 1**
+    🗄️ Generate Data
+    python generate_data.py
+    → traffic_data.csv
+    60 days · 17 280 rows"]
+
+    S2A["**Step 2A**
+    ⚡ Train XGBoost
+    python train_xgboost.py
+    → xgboost_model.pkl"]
+
+    S2B["**Step 2B**
+    🧠 Train LSTM
+    python train_lstm.py
+    → lstm_model.pth + scaler"]
+
+    S3["**Step 3**
+    🚀 Start API
+    python run_dashboard.py
+    localhost:8000"]
+
+    S4["**Step 4**
+    🖥️ Launch Dashboard
+    python -m http.server 8001
+    localhost:8001/dashboard.html"]
+
+    S5["**Step 5**
+    🔮 Predict!
+    Fill inputs → Click Predict
+    → Speed forecast (km/h)"]
+
+    S1 --> S2A & S2B
+    S2A & S2B --> S3
+    S3 --> S4
+    S4 --> S5
+
+    style S1 fill:#0d1b2a,stroke:#00D4FF,color:#fff
+    style S2A fill:#0d1b2a,stroke:#ff6600,color:#fff
+    style S2B fill:#0d1b2a,stroke:#EE4C2C,color:#fff
+    style S3 fill:#0d1b2a,stroke:#009688,color:#fff
+    style S4 fill:#0d1b2a,stroke:#66ff88,color:#fff
+    style S5 fill:#0d1b2a,stroke:#ffaa00,color:#fff
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  STEP 1 ▸ Data Generation
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  $ python generate_data.py
+---
 
-  Outputs: traffic_data.csv
-  ├── 60 days of 5-minute interval records
-  ├── Columns: timestamp, speed, volume, weather_temp, weather_precip
-  └── ~17,280 rows ready for training
+## 🧠 ML Models
 
+### ⚡ XGBoost — Tabular Gradient Boosting
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  STEP 2 ▸ Feature Engineering & Model Training
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```mermaid
+flowchart LR
+    subgraph INPUT["Input Features (9 total)"]
+        direction TB
+        T["🕐 Temporal
+        hour · day_of_week"]
+        W["🌦️ Weather
+        temp · precipitation"]
+        V["🚗 Traffic
+        volume"]
+        L["📉 Lag Features
+        speed_lag_1 · lag_2 · lag_3"]
+        R["📊 Aggregates
+        rolling_mean_3"]
+    end
 
-  ┌──────────────────────────┬───────────────────────────────┐
-  │     XGBoost Path         │         LSTM Path             │
-  ├──────────────────────────┼───────────────────────────────┤
-  │ 1. Build lag features    │ 1. Build 6-step sequences     │
-  │ 2. Train regressor       │ 2. Normalize with scaler      │
-  │ 3. Evaluate on test set  │ 3. Train 2-layer LSTM         │
-  │ 4. Save .pkl             │ 4. Save .pth + scaler         │
-  └──────────────────────────┴───────────────────────────────┘
+    XGB["⚡ XGBoost Regressor
+    objective: regression:squarederror
+    artifact: xgboost_model.pkl"]
 
-  $ python train_xgboost.py    →   xgboost_model.pkl
-  $ python train_lstm.py       →   lstm_model.pth + scaler
+    OUT["🔮 predicted_speed
+    (km/h, float)"]
 
+    T & W & V & L & R --> XGB --> OUT
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  STEP 3 ▸ Start the API Server
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    style INPUT fill:#1a2a1a,stroke:#ff6600,color:#fff
+    style XGB fill:#3d2000,stroke:#ff6600,color:#fff
+    style OUT fill:#0d1b0d,stroke:#66ff88,color:#fff
+```
 
-  $ python run_dashboard.py
+### 🧠 LSTM — Deep Sequence Learning
 
-  ✓ Loads XGBoost model
-  ✓ Loads LSTM model + scaler
-  ✓ FastAPI live at  http://localhost:8000
-  ✓ Docs live at    http://localhost:8000/docs
+```mermaid
+flowchart LR
+    subgraph SEQ["Input Sequence"]
+        direction TB
+        T1["t-5: hour · dow · temp · precip · vol · speed"]
+        T2["t-4: ..."]
+        T3["t-3: ..."]
+        T4["t-2: ..."]
+        T5["t-1: ..."]
+        T6["t:   hour · dow · temp · precip · vol · speed"]
+    end
 
+    subgraph NET["LSTM Network (PyTorch 2.0+)"]
+        direction TB
+        L1["LSTM Layer 1 — 64 hidden units"]
+        L2["LSTM Layer 2 — 64 hidden units"]
+        D["Dropout — 0.2"]
+        FC["Dense Output — 1 unit"]
+    end
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  STEP 4 ▸ Launch the Dashboard
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    OUT["🔮 predicted_speed
+    (km/h, float)"]
 
-  $ python -m http.server 8001
+    T1 & T2 & T3 & T4 & T5 & T6 --> L1
+    L1 --> L2 --> D --> FC --> OUT
 
-  Open → http://localhost:8001/dashboard.html
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  STEP 5 ▸ Predict!
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Fill inputs  →  Click Predict  →  See speed forecast (km/h)
+    style SEQ fill:#1a0d2a,stroke:#EE4C2C,color:#fff
+    style NET fill:#1a0d2a,stroke:#cc66ff,color:#fff
+    style OUT fill:#0d1b0d,stroke:#66ff88,color:#fff
 ```
 
 ---
@@ -320,55 +369,6 @@ http://localhost:8001/dashboard.html
 {
   "predicted_speed": 40.1
 }
-```
-
----
-
-## 🧠 ML Models
-
-### ⚡ XGBoost — Tabular Gradient Boosting
-
-```
-INPUT FEATURES (9 total)
-────────────────────────────────────────────────────────────
-  Temporal      │ hour, day_of_week
-  Weather       │ weather_temp, weather_precip
-  Traffic       │ volume
-  Lag Features  │ speed_lag_1, speed_lag_2, speed_lag_3
-  Aggregates    │ rolling_mean_3
-────────────────────────────────────────────────────────────
-OUTPUT          │ predicted_speed  (km/h, float)
-OBJECTIVE       │ regression:squarederror
-ARTIFACT        │ xgboost_model.pkl
-────────────────────────────────────────────────────────────
-WHY XGBOOST?
-  ✓ Fast inference at prediction time
-  ✓ Handles tabular data extremely well
-  ✓ Naturally interpretable feature importance
-  ✓ Robust to missing values and outliers
-```
-
-### 🧠 LSTM — Deep Sequence Learning
-
-```
-ARCHITECTURE
-────────────────────────────────────────────────────────────
-  Input Shape   │ (batch_size, 6 timesteps, 6 features)
-                │
-  LSTM Layer 1  │ 64 hidden units, return_sequences=True
-  LSTM Layer 2  │ 64 hidden units
-  Dropout       │ 0.2
-  Dense Output  │ 1 unit (speed prediction)
-────────────────────────────────────────────────────────────
-OUTPUT          │ predicted_speed  (km/h, float)
-FRAMEWORK       │ PyTorch 2.0+
-ARTIFACTS       │ lstm_model.pth + scaler
-────────────────────────────────────────────────────────────
-WHY LSTM?
-  ✓ Captures temporal dependencies across timesteps
-  ✓ Learns patterns like rush-hour cycles
-  ✓ Handles long-range seasonality
-  ✓ Generalises well to unseen sequences
 ```
 
 ---
