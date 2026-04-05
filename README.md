@@ -24,6 +24,30 @@
 
 ---
 
+## 🌆 What is Smart City Traffic Prediction?
+
+<div align="center">
+  <img src="https://media.giphy.com/media/l0HlHFRbmaZtBRhXG/giphy.gif" width="500" alt="Smart City Traffic"/>
+</div>
+
+<br/>
+
+> **Smart City Traffic Prediction** is an end-to-end machine learning system that forecasts urban traffic speed in real time — helping city planners, commuters, and smart city platforms make faster, data-driven decisions about road congestion.
+
+Urban traffic congestion costs billions in lost productivity every year. This project tackles that problem by combining two powerful ML models — **XGBoost** (lightning-fast tabular predictions) and **LSTM** (deep learning for time-series patterns) — into a hybrid forecasting engine that predicts the average traffic speed for the next 5-minute interval at any road sensor.
+
+### 🔑 How it works at a glance:
+
+- 📊 **Ingests** 60 days of traffic data (speed, volume) fused with weather signals (temperature, precipitation)
+- ⚙️ **Engineers** temporal lag features, rolling windows, and time embeddings
+- 🧠 **Trains** an XGBoost regressor and a 2-layer LSTM neural network in parallel
+- 🚀 **Serves** both models through a production-ready **FastAPI** REST API
+- 🖥️ **Visualises** live predictions through an interactive **HTML dashboard** — zero setup required
+
+Whether you're a researcher exploring hybrid ML architectures, a developer building smart city integrations, or a data scientist benchmarking traffic models — this project gives you a fully working, end-to-end foundation.
+
+---
+
 ## 📌 Table of Contents
 
 <details>
@@ -54,6 +78,10 @@
 | **Traffic Speed Prediction** | **Hybrid ML Models** | **Weather Integration** | **REST API** | **Live Dashboard** | **Data Generator** |
 | Predicts avg speed for next 5-min interval | XGBoost + LSTM ensemble | Temp, precipitation & more | FastAPI + CORS, production-ready | HTML/JS frontend, zero setup | 60 days of synthetic data |
 
+</div>
+
+<div align="center">
+  <img src="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif" width="400" alt="Machine Learning in Action"/>
 </div>
 
 ---
@@ -157,7 +185,7 @@ flowchart LR
     S5["**Step 5**
     🔮 Predict!
     Fill inputs → Click Predict
-    → Speed forecast (km/h)"]
+    → Speed forecast km/h"]
 
     S1 --> S2A & S2B
     S2A & S2B --> S3
@@ -170,75 +198,6 @@ flowchart LR
     style S3 fill:#0d1b2a,stroke:#009688,color:#fff
     style S4 fill:#0d1b2a,stroke:#66ff88,color:#fff
     style S5 fill:#0d1b2a,stroke:#ffaa00,color:#fff
-```
-
----
-
-## 🧠 ML Models
-
-### ⚡ XGBoost — Tabular Gradient Boosting
-
-```mermaid
-flowchart LR
-    subgraph INPUT["Input Features (9 total)"]
-        direction TB
-        T["🕐 Temporal
-        hour · day_of_week"]
-        W["🌦️ Weather
-        temp · precipitation"]
-        V["🚗 Traffic
-        volume"]
-        L["📉 Lag Features
-        speed_lag_1 · lag_2 · lag_3"]
-        R["📊 Aggregates
-        rolling_mean_3"]
-    end
-
-    XGB["⚡ XGBoost Regressor
-    objective: regression:squarederror
-    artifact: xgboost_model.pkl"]
-
-    OUT["🔮 predicted_speed
-    (km/h, float)"]
-
-    T & W & V & L & R --> XGB --> OUT
-
-    style INPUT fill:#1a2a1a,stroke:#ff6600,color:#fff
-    style XGB fill:#3d2000,stroke:#ff6600,color:#fff
-    style OUT fill:#0d1b0d,stroke:#66ff88,color:#fff
-```
-
-### 🧠 LSTM — Deep Sequence Learning
-
-```mermaid
-flowchart LR
-    subgraph SEQ["Input Sequence"]
-        direction TB
-        T1["t-5: hour · dow · temp · precip · vol · speed"]
-        T2["t-4: ..."]
-        T3["t-3: ..."]
-        T4["t-2: ..."]
-        T5["t-1: ..."]
-        T6["t:   hour · dow · temp · precip · vol · speed"]
-    end
-
-    subgraph NET["LSTM Network (PyTorch 2.0+)"]
-        direction TB
-        L1["LSTM Layer 1 — 64 hidden units"]
-        L2["LSTM Layer 2 — 64 hidden units"]
-        D["Dropout — 0.2"]
-        FC["Dense Output — 1 unit"]
-    end
-
-    OUT["🔮 predicted_speed
-    (km/h, float)"]
-
-    T1 & T2 & T3 & T4 & T5 & T6 --> L1
-    L1 --> L2 --> D --> FC --> OUT
-
-    style SEQ fill:#1a0d2a,stroke:#EE4C2C,color:#fff
-    style NET fill:#1a0d2a,stroke:#cc66ff,color:#fff
-    style OUT fill:#0d1b0d,stroke:#66ff88,color:#fff
 ```
 
 ---
@@ -373,7 +332,91 @@ http://localhost:8001/dashboard.html
 
 ---
 
+## 🧠 ML Models
+
+<div align="center">
+  <img src="https://media.giphy.com/media/3oKIPEqDGUULpEU0aQ/giphy.gif" width="420" alt="Data Visualisation"/>
+</div>
+
+### ⚡ XGBoost — Tabular Gradient Boosting
+
+```mermaid
+flowchart LR
+    subgraph INPUT["Input Features (9 total)"]
+        direction TB
+        T["🕐 Temporal
+        hour · day_of_week"]
+        W["🌦️ Weather
+        temp · precipitation"]
+        V["🚗 Traffic
+        volume"]
+        L["📉 Lag Features
+        speed_lag_1 · lag_2 · lag_3"]
+        R["📊 Aggregates
+        rolling_mean_3"]
+    end
+
+    XGB["⚡ XGBoost Regressor
+    objective: regression:squarederror
+    artifact: xgboost_model.pkl"]
+
+    OUT["🔮 predicted_speed
+    (km/h, float)"]
+
+    T & W & V & L & R --> XGB --> OUT
+
+    style INPUT fill:#1a2a1a,stroke:#ff6600,color:#fff
+    style XGB fill:#3d2000,stroke:#ff6600,color:#fff
+    style OUT fill:#0d1b0d,stroke:#66ff88,color:#fff
+```
+
+### 🧠 LSTM — Deep Sequence Learning
+
+```mermaid
+flowchart LR
+    subgraph SEQ["Input Sequence — 6 Timesteps"]
+        direction TB
+        T1["t-5: hour · dow · temp · precip · vol · speed"]
+        T2["t-4: ..."]
+        T3["t-3: ..."]
+        T4["t-2: ..."]
+        T5["t-1: ..."]
+        T6["t:   hour · dow · temp · precip · vol · speed"]
+    end
+
+    subgraph NET["LSTM Network (PyTorch 2.0+)"]
+        direction TB
+        L1["LSTM Layer 1 — 64 hidden units"]
+        L2["LSTM Layer 2 — 64 hidden units"]
+        D["Dropout — 0.2"]
+        FC["Dense Output — 1 unit"]
+    end
+
+    OUT["🔮 predicted_speed
+    (km/h, float)"]
+
+    T1 & T2 & T3 & T4 & T5 & T6 --> L1
+    L1 --> L2 --> D --> FC --> OUT
+
+    style SEQ fill:#1a0d2a,stroke:#EE4C2C,color:#fff
+    style NET fill:#1a0d2a,stroke:#cc66ff,color:#fff
+    style OUT fill:#0d1b0d,stroke:#66ff88,color:#fff
+```
+
+---
+
 ## 🖥️ Dashboard
+
+<div align="center">
+  <img src="https://media.giphy.com/media/077i6AULCXc0FKTj9s/giphy.gif" width="460" alt="Live Dashboard Preview"/>
+
+  <br/>
+
+  > 💡 **Pro tip:** Replace this GIF with a screen recording of your own running dashboard!
+  > Use [ScreenToGif](https://www.screentogif.com/) on Windows or [Kap](https://getkap.co/) on Mac, then drag-and-drop it into this README on GitHub.
+</div>
+
+<br/>
 
 The dashboard serves two interactive prediction cards at `http://localhost:8001/dashboard.html`:
 
@@ -386,9 +429,7 @@ The dashboard serves two interactive prediction cards at `http://localhost:8001/
 │  Volume        [ 180 ]    Speed Lag 1    [  45 ]         │
 │  Speed Lag 2   [  48 ]    Speed Lag 3    [  52 ]         │
 │  Rolling Mean  [48.33]                                   │
-│                                                         │
 │                     [ PREDICT ]                         │
-│                                                         │
 │            Predicted Speed:  43.2 km/h  🟢              │
 └─────────────────────────────────────────────────────────┘
 
@@ -396,14 +437,8 @@ The dashboard serves two interactive prediction cards at `http://localhost:8001/
 │              🧠  LSTM Prediction                         │
 │─────────────────────────────────────────────────────────│
 │  Paste 6-step JSON sequence:                            │
-│  ┌───────────────────────────────────────────────────┐  │
-│  │ [{"hour":17,"day_of_week":3,"weather_temp":22.5,  │  │
-│  │   "weather_precip":0,"volume":180,"speed":45},    │  │
-│  │  ...5 more timesteps...]                          │  │
-│  └───────────────────────────────────────────────────┘  │
-│                                                         │
+│  [ {"hour":17, "day_of_week":3, ...} × 6 steps ]       │
 │                     [ PREDICT ]                         │
-│                                                         │
 │            Predicted Speed:  40.1 km/h  🟡              │
 └─────────────────────────────────────────────────────────┘
 ```
